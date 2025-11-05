@@ -1,313 +1,471 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-gray-100">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Presentation App</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+  <title>The Ultimate AI Presenter</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@latest/dist/pose-detection.min.js"></script>
+
+  <style>
     body {
-      font-family: 'Arial', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       overflow: hidden;
     }
-
-    #slide-container {
-      width: 100vw;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      color: white;
-      text-align: center;
-      padding: 2rem;
+    
+    /* Slide Content Styles (From File 1) */
+    #slide-content h1 {
+      font-size: 2.5rem; /* 40px */
+      line-height: 1.2;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+    #slide-content h2 {
+      font-size: 1.875rem; /* 30px */
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+    }
+    #slide-content ul {
+      list-style-type: disc;
+      padding-left: 2.5rem;
+      font-size: 1.5rem; /* 24px */
+      line-height: 1.75;
+    }
+    #slide-content p {
+      font-size: 1.5rem; /* 24px */
+      line-height: 1.75;
     }
 
-    .slide {
-      display: none;
-      max-width: 800px;
-      width: 100%;
-    }
-
-    .slide.active {
-      display: block;
+    /* Slide transition animation (From File 2) */
+    .slide-anim {
       animation: fadeIn 0.5s ease-in-out;
     }
-
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .slide h1 {
-      font-size: 3rem;
-      margin-bottom: 2rem;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-
-    .slide h2 {
-      font-size: 2rem;
-      margin-bottom: 1.5rem;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-
-    .slide p {
-      font-size: 1.2rem;
-      line-height: 1.6;
-      margin-bottom: 1rem;
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-    }
-
-    .slide ul {
-      text-align: left;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-
-    .slide li {
-      font-size: 1.1rem;
-      margin-bottom: 0.8rem;
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-    }
-
-    #webcam {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      width: 200px;
-      height: 150px;
-      border: 3px solid rgba(255, 255, 255, 0.8);
-      border-radius: 10px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-      z-index: 1000;
-      object-fit: cover;
-    }
-
-    .nav-buttons {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 20px;
-      z-index: 1000;
-    }
-
-    #prev-btn, #next-btn {
-      background: rgba(255, 255, 255, 0.2);
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      color: white;
-      padding: 12px 24px;
-      border-radius: 25px;
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: bold;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(10px);
-    }
-
-    #prev-btn:hover, #next-btn:hover {
-      background: rgba(255, 255, 255, 0.3);
-      border-color: rgba(255, 255, 255, 0.5);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    }
-
-    #prev-btn:disabled, #next-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .slide-counter {
-      position: fixed;
-      top: 30px;
-      right: 30px;
-      background: rgba(0, 0, 0, 0.3);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 20px;
-      font-size: 1rem;
-      backdrop-filter: blur(10px);
-      z-index: 1000;
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
   </style>
 </head>
-<body>
-  <div id="slide-container">
-    <!-- Slide 1 -->
-    <div class="slide active">
-      <h1>Welcome to Our Presentation</h1>
-      <p>An interactive presentation with webcam integration</p>
-      <p>Use the navigation buttons below or gesture controls to navigate through slides</p>
-    </div>
 
-    <!-- Slide 2 -->
-    <div class="slide">
-      <h2>About This App</h2>
-      <ul>
-        <li>Built with HTML, CSS, and JavaScript</li>
-        <li>Features webcam integration for gesture control</li>
-        <li>Smooth slide transitions</li>
-        <li>Responsive design</li>
-      </ul>
-    </div>
+<body class="h-full">
 
-    <!-- Slide 3 -->
-    <div class="slide">
-      <h2>Key Features</h2>
-      <ul>
-        <li>🎥 Live webcam feed</li>
-        <li>👆 Gesture-based navigation</li>
-        <li>🎨 Beautiful animations</li>
-        <li>📱 Mobile-friendly design</li>
-      </ul>
-    </div>
-
-    <!-- Slide 4 -->
-    <div class="slide">
-      <h2>How to Navigate</h2>
-      <p>You can navigate through slides using:</p>
-      <ul>
-        <li>Previous/Next buttons at the bottom</li>
-        <li>Keyboard arrow keys</li>
-        <li>Hand gestures (when AI is enabled)</li>
-      </ul>
-    </div>
-
-    <!-- Slide 5 -->
-    <div class="slide">
-      <h1>Thank You!</h1>
-      <p>This concludes our presentation</p>
-      <p>Ready to add AI-powered gesture recognition!</p>
+  <div id="input-view" class="flex h-full items-center justify-center bg-gray-900">
+    <div class="w-full max-w-lg rounded-xl bg-white p-8 shadow-2xl">
+      <h1 class="text-center text-3xl font-bold text-gray-900">Ultimate AI Presenter</h1>
+      <p class="mt-2 text-center text-gray-600">What topic do you want to present on?</p>
+      
+      <div class="mt-6">
+        <label for="topic-input" class="block text-sm font-medium text-gray-700">Presentation Topic</label>
+        <textarea id="topic-input" rows="4" class="mt-1 block w-full rounded-md border-gray-300 p-3 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="e.g., 'A 5-slide presentation on the basics of neural networks'"></textarea>
+      </div>
+      
+      <div class="mt-6">
+        <button id="generate-btn" class="flex w-full justify-center rounded-md border border-transparent bg-blue-600 py-3 px-4 text-lg font-bold text-white shadow-sm hover:bg-blue-700 disabled:bg-gray-400">
+          <span id="generate-btn-text">Generate & Present</span>
+          <svg id="loading-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <p id="status-message" class="mt-4 text-center text-sm text-red-600"></p>
     </div>
   </div>
 
-  <video id="webcam" autoplay muted playsinline></video>
+  <div id="presentation-view" class="relative hidden h-full w-full flex-col items-center justify-center bg-gray-900 p-8">
+    
+    <div id="slide-container" class="flex w-full max-w-5xl aspect-[16/9] flex-col justify-center rounded-lg bg-white p-12 text-left shadow-xl text-gray-900">
+      <div id="slide-content" class="w-full h-full">
+        </div>
+    </div>
 
-  <div class="nav-buttons">
-    <button id="prev-btn">← Previous</button>
-    <button id="next-btn">Next →</button>
+    <div id="slide-counter" class="absolute bottom-20 text-lg font-medium text-gray-300 z-10">
+      Slide 1 / 1
+    </div>
+
+    <video id="webcam" autoplay muted playsinline class="w-52 h-auto aspect-video bg-black fixed bottom-4 left-4 rounded-lg shadow-2xl border border-gray-700 z-20 object-cover"></video>
+
+    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-4">
+      <button id="prev-btn" class="px-5 py-2 bg-white bg-opacity-20 text-white rounded-lg shadow-lg backdrop-blur-sm hover:bg-opacity-30 transition-all active:scale-95 disabled:opacity-50">
+        &larr; Prev
+      </button>
+      <button id="next-btn" class="px-5 py-2 bg-white bg-opacity-20 text-white rounded-lg shadow-lg backdrop-blur-sm hover:bg-opacity-30 transition-all active:scale-95 disabled:opacity-50">
+        Next &rarr;
+      </button>
+    </div>
+    
+    <button id="back-btn" class="fixed top-6 left-6 rounded-lg bg-gray-600 py-2 px-4 text-sm font-medium text-white shadow-md hover:bg-gray-700 z-20">
+      &larr; New Topic
+    </button>
   </div>
 
-  <div class="slide-counter">
-    <span id="current-slide">1</span> / <span id="total-slides">5</span>
-  </div>
 
-  <script>
-    class PresentationApp {
-      constructor() {
-        this.currentSlide = 0;
-        this.slides = document.querySelectorAll('.slide');
-        this.totalSlides = this.slides.length;
-        
-        this.prevBtn = document.getElementById('prev-btn');
-        this.nextBtn = document.getElementById('next-btn');
-        this.currentSlideSpan = document.getElementById('current-slide');
-        this.totalSlidesSpan = document.getElementById('total-slides');
-        this.webcam = document.getElementById('webcam');
-        
-        this.init();
+  <script type="module">
+    // --- STATE & CONSTANTS (MERGED) ---
+    
+    // Gemini API Config (From File 1)
+    const MODEL_NAME = "gemini-2.5-flash-preview-09-2025";
+    const apiKey = "AIzaSyCo1ps1aqgDtMUMBYD_9DraFyule8pTBZs"; // This is a placeholder
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
+    const systemPrompt = `You are a presentation-generation AI. The user will provide a topic.
+You must generate a series of slides.
+Respond *only* with a valid JSON array. Each object in the array should have a "title" (string) and "content" (string).
+The "content" field should be formatted as simple Markdown (e.g., using <ul>, <li>, <p>, <strong>).
+Do not include any other text, greetings, or backticks in your response. The response must be *only* the JSON array.
+Example of your *only* output:
+[
+  {"title": "Slide 1 Title", "content": "<p>This is the content for the first slide.</p>"},
+  {"title": "Slide 2 Title", "content": "<ul><li>Bullet point 1</li><li>Bullet point 2</li></ul>"}
+]`;
+    const jsonSchema = {
+      "type": "ARRAY",
+      "items": {
+        "type": "OBJECT",
+        "properties": {
+          "title": { "type": "STRING" },
+          "content": { "type": "STRING" }
+        },
+        "required": ["title", "content"]
       }
+    };
 
-      init() {
-        // Set up event listeners
-        this.prevBtn.addEventListener('click', () => this.previousSlide());
-        this.nextBtn.addEventListener('click', () => this.nextSlide());
-        
-        // Keyboard navigation
-        document.addEventListener('keydown', (e) => {
-          if (e.key === 'ArrowLeft') this.previousSlide();
-          if (e.key === 'ArrowRight') this.nextSlide();
+    // App State
+    let slides = [];
+    let currentSlide = 0;
+    let isLoading = false;
+    
+    // Gesture AI State (From File 2)
+    let detector;
+    let webcamStream;
+    let isGestureCooldown = false;
+    const GESTURE_COOLDOWN_MS = 1500; // 1.5 seconds
+
+    // --- DOM ELEMENTS (MERGED) ---
+    const inputView = document.getElementById("input-view");
+    const presentationView = document.getElementById("presentation-view");
+    
+    const topicInput = document.getElementById("topic-input");
+    const generateBtn = document.getElementById("generate-btn");
+    const generateBtnText = document.getElementById("generate-btn-text");
+    const loadingSpinner = document.getElementById("loading-spinner");
+    const statusMessage = document.getElementById("status-message");
+    
+    const slideContainer = document.getElementById("slide-container");
+    const slideContent = document.getElementById("slide-content");
+    const slideCounter = document.getElementById("slide-counter");
+    const prevBtn = document.getElementById("prev-btn");
+    const nextBtn = document.getElementById("next-btn");
+    const backBtn = document.getElementById("back-btn");
+    
+    const webcamVideo = document.getElementById('webcam');
+
+    // --- VIEW FUNCTIONS (MERGED) ---
+    
+    function showInputView() {
+      inputView.classList.remove("hidden");
+      inputView.classList.add("flex");
+      presentationView.classList.add("hidden");
+      presentationView.classList.remove("flex");
+
+      // Stop webcam and AI when returning to input
+      stopWebcamAI();
+    }
+    
+    function showPresentationView() {
+      inputView.classList.add("hidden");
+      inputView.classList.remove("flex");
+      presentationView.classList.remove("hidden");
+      presentationView.classList.add("flex");
+
+      // Start the webcam and AI
+      setupWebcamAI();
+    }
+
+    // --- PRESENTATION FUNCTIONS (MERGED) ---
+
+    /**
+     * This is the slide renderer from File 1.
+     * It's perfect for rendering the text/HTML from Gemini.
+     */
+    function updateSlideContent() {
+      if (slides.length === 0) return;
+      
+      const slide = slides[currentSlide];
+      const contentHtml = marked.parse(slide.content);
+      
+      slideContent.innerHTML = `
+        <h1 class="text-4xl font-bold mb-6">${slide.title}</h1>
+        <div class="text-2xl leading-relaxed">${contentHtml}</div>
+      `;
+      
+      // Add animation class
+      slideContainer.classList.remove('slide-anim');
+      void slideContainer.offsetWidth; // Force reflow
+      slideContainer.classList.add('slide-anim');
+
+      slideCounter.innerText = `Slide ${currentSlide + 1} / ${slides.length}`;
+      updateButtonState();
+    }
+
+    function updateButtonState() {
+      prevBtn.disabled = (currentSlide === 0);
+      nextBtn.disabled = (currentSlide === slides.length - 1);
+    }
+
+    /**
+     * These are the navigation functions from File 2.
+     * They are superior because they include the gesture cooldown check.
+     */
+    function nextSlide() {
+      if (currentSlide >= slides.length - 1 || isGestureCooldown) return;
+      
+      console.log("Moving to Next Slide");
+      currentSlide++;
+      updateSlideContent(); // Use File 1's render function
+    }
+
+    function prevSlide() {
+      if (currentSlide <= 0 || isGestureCooldown) return;
+
+      console.log("Moving to Previous Slide");
+      currentSlide--;
+      updateSlideContent(); // Use File 1's render function
+    }
+
+    // --- GEMINI API FUNCTIONS (From File 1) ---
+    
+    async function handleGenerate() {
+      const userTopic = topicInput.value;
+      if (!userTopic.trim()) {
+        statusMessage.innerText = "Please enter a topic.";
+        return;
+      }
+      
+      setLoading(true);
+
+      const payload = {
+        systemInstruction: {
+          parts: [{ "text": systemPrompt }]
+        },
+        contents: [{
+          parts: [{ "text": userTopic }]
+        }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: jsonSchema,
+          temperature: 0.7,
+        }
+      };
+
+      try {
+        const result = await fetchWithRetry(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
         });
 
-        // Initialize webcam
-        this.initWebcam();
+        if (!result) {
+          throw new Error("API response was empty.");
+        }
+
+        const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!jsonText) {
+          throw new Error("Invalid response structure from API.");
+        }
+
+        slides = JSON.parse(jsonText);
         
-        // Update UI
-        this.updateSlideCounter();
-        this.updateButtons();
-      }
-
-      async initWebcam() {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { width: 640, height: 480 } 
-          });
-          this.webcam.srcObject = stream;
-          console.log('Webcam initialized successfully');
-        } catch (error) {
-          console.error('Error accessing webcam:', error);
-          this.webcam.style.display = 'none';
+        if (!Array.isArray(slides) || slides.length === 0) {
+            throw new Error("AI did not return valid slide data.");
         }
-      }
 
-      showSlide(index) {
-        // Hide all slides
-        this.slides.forEach(slide => slide.classList.remove('active'));
-        
-        // Show current slide
-        if (this.slides[index]) {
-          this.slides[index].classList.add('active');
-        }
-        
-        this.updateSlideCounter();
-        this.updateButtons();
-      }
+        // Success! Reset state and show the presentation.
+        currentSlide = 0;
+        updateSlideContent();
+        showPresentationView(); // This will now also start the webcam!
 
-      nextSlide() {
-        if (this.currentSlide < this.totalSlides - 1) {
-          this.currentSlide++;
-          this.showSlide(this.currentSlide);
-        }
+      } catch (error) {
+        console.error("Error generating slides:", error);
+        statusMessage.innerText = `Error: ${error.message}. Please try again.`;
+      } finally {
+        setLoading(false);
       }
-
-      previousSlide() {
-        if (this.currentSlide > 0) {
-          this.currentSlide--;
-          this.showSlide(this.currentSlide);
-        }
-      }
-
-      updateSlideCounter() {
-        this.currentSlideSpan.textContent = this.currentSlide + 1;
-        this.totalSlidesSpan.textContent = this.totalSlides;
-      }
-
-      updateButtons() {
-        this.prevBtn.disabled = this.currentSlide === 0;
-        this.nextBtn.disabled = this.currentSlide === this.totalSlides - 1;
-      }
-
-      // Method to be called by gesture recognition
-      handleGesture(gesture) {
-        console.log('Gesture detected:', gesture);
-        
-        switch(gesture) {
-          case 'swipe_left':
-          case 'point_right':
-            this.nextSlide();
-            break;
-          case 'swipe_right':
-          case 'point_left':
-            this.previousSlide();
-            break;
-          default:
-            console.log('Unknown gesture:', gesture);
-        }
+    }
+    
+    function setLoading(isLoading) {
+      if (isLoading) {
+        generateBtn.disabled = true;
+        generateBtnText.innerText = "Generating...";
+        loadingSpinner.classList.remove("hidden");
+        statusMessage.innerText = "";
+      } else {
+        generateBtn.disabled = false;
+        generateBtnText.innerText = "Generate & Present";
+        loadingSpinner.classList.add("hidden");
       }
     }
 
-    // Initialize the app when the page loads
-    document.addEventListener('DOMContentLoaded', () => {
-      window.presentationApp = new PresentationApp();
-    });
+    async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
+      let lastError;
+      for (let i = 0; i < retries; i++) {
+        try {
+          const response = await fetch(url, options);
+          if (!response.ok) {
+            throw new Error(`API Error: ${response.status} ${response.statusText}`);
+          }
+          return await response.json();
+        } catch (error) {
+          lastError = error;
+          if (i < retries - 1) {
+            await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+          }
+        }
+      }
+      throw lastError;
+    }
+
+    // --- TENSORFLOW.JS AI FUNCTIONS (From File 2) ---
+
+    async function setupWebcamAI() {
+      // Don't re-setup if already running
+      if (detector) return; 
+
+      // 1. Get webcam feed
+      try {
+        webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        webcamVideo.srcObject = webcamStream;
+      } catch (err) {
+        console.error("Error accessing webcam:", err);
+        webcamVideo.style.display = 'none';
+        return; // Stop if no webcam
+      }
+
+      // 2. Wait for video to be ready
+      await new Promise((resolve) => {
+        webcamVideo.onloadedmetadata = () => {
+          webcamVideo.play();
+          resolve();
+        };
+      });
+
+      // 3. Load the MoveNet detector
+      try {
+        const detectorConfig = {
+          modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
+        };
+        detector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, detectorConfig);
+        console.log("MoveNet detector loaded.");
+      } catch (err) {
+        console.error("Error loading MoveNet model:", err);
+        return; // Stop if model fails to load
+      }
+
+      // 4. Start the detection loop
+      runDetectionLoop();
+    }
+
+    /**
+     * Stops the webcam and clears the detector
+     */
+    function stopWebcamAI() {
+      if (webcamStream) {
+        webcamStream.getTracks().forEach(track => track.stop());
+        webcamStream = null;
+      }
+      if (detector) {
+        detector.dispose();
+        detector = null;
+        console.log("Webcam and AI stopped.");
+      }
+    }
+
+    async function runDetectionLoop() {
+      // Stop loop if detector was disposed (e.g., user went "Back")
+      if (!detector) return; 
+
+      try {
+        const poses = await detector.estimatePoses(webcamVideo, {
+          flipHorizontal: false
+        });
+
+        if (poses && poses.length > 0 && poses[0].keypoints) {
+          handleGesture(poses[0].keypoints);
+        }
+      } catch (err) {
+        console.error("Error during pose estimation:", err);
+      }
+      
+      // Loop
+      requestAnimationFrame(runDetectionLoop);
+    }
+
+    function handleGesture(keypoints) {
+      if (isGestureCooldown) {
+        return;
+      }
+
+      const getKeypoint = (name) => keypoints.find(kp => kp.name === name);
+
+      const rightWrist = getKeypoint('right_wrist');
+      const rightElbow = getKeypoint('right_elbow');
+      const leftWrist = getKeypoint('left_wrist');
+      const leftElbow = getKeypoint('left_elbow');
+      const confidenceThreshold = 0.3;
+
+      if (!rightWrist || !rightElbow || !leftWrist || !leftElbow ||
+          rightWrist.score < confidenceThreshold ||
+          rightElbow.score < confidenceThreshold ||
+          leftWrist.score < confidenceThreshold ||
+          leftElbow.score < confidenceThreshold) {
+        return;
+      }
+
+      let gestureDetected = false;
+
+      // "Next" gesture: Right wrist is above right elbow
+      if (rightWrist.y < rightElbow.y) {
+        console.log("Next Gesture (Right Hand Up) Detected!");
+        nextSlide();
+        gestureDetected = true;
+      } 
+      // "Prev" gesture: Left wrist is above left elbow
+      else if (leftWrist.y < leftElbow.y) {
+        console.log("Prev Gesture (Left Hand Up) Detected!");
+        prevSlide();
+        gestureDetected = true;
+      }
+
+      if (gestureDetected) {
+        isGestureCooldown = true;
+        webcamVideo.style.borderColor = 'rgb(59 130 246)'; // Blue
+        webcamVideo.style.borderWidth = '4px';
+
+        setTimeout(() => {
+          isGestureCooldown = false;
+          webcamVideo.style.borderColor = 'rgb(55 65 81)'; // Gray
+          webcamVideo.style.borderWidth = '1px';
+        }, GESTURE_COOLDOWN_MS);
+      }
+    }
+
+
+    // --- EVENT LISTENERS (MERGED) ---
+    generateBtn.addEventListener("click", handleGenerate);
+    prevBtn.addEventListener("click", prevSlide);
+    nextBtn.addEventListener("click", nextSlide);
+    backBtn.addEventListener("click", showInputView);
+
+    // --- INITIALIZATION ---
+    showInputView(); // Start on the input screen
+    
   </script>
+
 </body>
 </html>
