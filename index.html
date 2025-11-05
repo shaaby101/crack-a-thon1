@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presentation App</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      overflow: hidden;
+    }
+
+    #slide-container {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      color: white;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .slide {
+      display: none;
+      max-width: 800px;
+      width: 100%;
+    }
+
+    .slide.active {
+      display: block;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide h1 {
+      font-size: 3rem;
+      margin-bottom: 2rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .slide h2 {
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .slide p {
+      font-size: 1.2rem;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .slide ul {
+      text-align: left;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .slide li {
+      font-size: 1.1rem;
+      margin-bottom: 0.8rem;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+
+    #webcam {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      width: 200px;
+      height: 150px;
+      border: 3px solid rgba(255, 255, 255, 0.8);
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      object-fit: cover;
+    }
+
+    .nav-buttons {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+      z-index: 1000;
+    }
+
+    #prev-btn, #next-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    #prev-btn:hover, #next-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    #prev-btn:disabled, #next-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .slide-counter {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 1rem;
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <div id="slide-container">
+    <!-- Slide 1 -->
+    <div class="slide active">
+      <h1>Welcome to Our Presentation</h1>
+      <p>An interactive presentation with webcam integration</p>
+      <p>Use the navigation buttons below or gesture controls to navigate through slides</p>
+    </div>
+
+    <!-- Slide 2 -->
+    <div class="slide">
+      <h2>About This App</h2>
+      <ul>
+        <li>Built with HTML, CSS, and JavaScript</li>
+        <li>Features webcam integration for gesture control</li>
+        <li>Smooth slide transitions</li>
+        <li>Responsive design</li>
+      </ul>
+    </div>
+
+    <!-- Slide 3 -->
+    <div class="slide">
+      <h2>Key Features</h2>
+      <ul>
+        <li>🎥 Live webcam feed</li>
+        <li>👆 Gesture-based navigation</li>
+        <li>🎨 Beautiful animations</li>
+        <li>📱 Mobile-friendly design</li>
+      </ul>
+    </div>
+
+    <!-- Slide 4 -->
+    <div class="slide">
+      <h2>How to Navigate</h2>
+      <p>You can navigate through slides using:</p>
+      <ul>
+        <li>Previous/Next buttons at the bottom</li>
+        <li>Keyboard arrow keys</li>
+        <li>Hand gestures (when AI is enabled)</li>
+      </ul>
+    </div>
+
+    <!-- Slide 5 -->
+    <div class="slide">
+      <h1>Thank You!</h1>
+      <p>This concludes our presentation</p>
+      <p>Ready to add AI-powered gesture recognition!</p>
+    </div>
+  </div>
+
+  <video id="webcam" autoplay muted playsinline></video>
+
+  <div class="nav-buttons">
+    <button id="prev-btn">← Previous</button>
+    <button id="next-btn">Next →</button>
+  </div>
+
+  <div class="slide-counter">
+    <span id="current-slide">1</span> / <span id="total-slides">5</span>
+  </div>
+
+  <script>
+    class PresentationApp {
+      constructor() {
+        this.currentSlide = 0;
+        this.slides = document.querySelectorAll('.slide');
+        this.totalSlides = this.slides.length;
+        
+        this.prevBtn = document.getElementById('prev-btn');
+        this.nextBtn = document.getElementById('next-btn');
+        this.currentSlideSpan = document.getElementById('current-slide');
+        this.totalSlidesSpan = document.getElementById('total-slides');
+        this.webcam = document.getElementById('webcam');
+        
+        this.init();
+      }
+
+      init() {
+        // Set up event listeners
+        this.prevBtn.addEventListener('click', () => this.previousSlide());
+        this.nextBtn.addEventListener('click', () => this.nextSlide());
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowLeft') this.previousSlide();
+          if (e.key === 'ArrowRight') this.nextSlide();
+        });
+
+        // Initialize webcam
+        this.initWebcam();
+        
+        // Update UI
+        this.updateSlideCounter();
+        this.updateButtons();
+      }
+
+      async initWebcam() {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { width: 640, height: 480 } 
+          });
+          this.webcam.srcObject = stream;
+          console.log('Webcam initialized successfully');
+        } catch (error) {
+          console.error('Error accessing webcam:', error);
+          this.webcam.style.display = 'none';
+        }
+      }
+
+      showSlide(index) {
+        // Hide all slides
+        this.slides.forEach(slide => slide.classList.remove('active'));
+        
+        // Show current slide
+        if (this.slides[index]) {
+          this.slides[index].classList.add('active');
+        }
+        
+        this.updateSlideCounter();
+        this.updateButtons();
+      }
+
+      nextSlide() {
+        if (this.currentSlide < this.totalSlides - 1) {
+          this.currentSlide++;
+          this.showSlide(this.currentSlide);
+        }
+      }
+
+      previousSlide() {
+        if (this.currentSlide > 0) {
+          this.currentSlide--;
+          this.showSlide(this.currentSlide);
+        }
+      }
+
+      updateSlideCounter() {
+        this.currentSlideSpan.textContent = this.currentSlide + 1;
+        this.totalSlidesSpan.textContent = this.totalSlides;
+      }
+
+      updateButtons() {
+        this.prevBtn.disabled = this.currentSlide === 0;
+        this.nextBtn.disabled = this.currentSlide === this.totalSlides - 1;
+      }
+
+      // Method to be called by gesture recognition
+      handleGesture(gesture) {
+        console.log('Gesture detected:', gesture);
+        
+        switch(gesture) {
+          case 'swipe_left':
+          case 'point_right':
+            this.nextSlide();
+            break;
+          case 'swipe_right':
+          case 'point_left':
+            this.previousSlide();
+            break;
+          default:
+            console.log('Unknown gesture:', gesture);
+        }
+      }
+    }
+
+    // Initialize the app when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      window.presentationApp = new PresentationApp();
+    });
+  </script>
+</body>
+</html>
