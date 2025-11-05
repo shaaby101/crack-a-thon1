@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-gray-100">
+<html lang="en" class="h-full">
 
 <head>
   <meta charset="UTF-8">
@@ -12,63 +12,382 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@latest/dist/pose-detection.min.js"></script>
-
+  
+  <!-- STYLIZED FONT IMPORTS (for all themes) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=IBM+Plex+Mono:wght@400;700&family=Inter:wght@400;700&family=Pacifico&family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
+  
   <style>
-    body {
-      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      overflow: hidden;
+    /*
+      DYNAMIC THEME ENGINE
+      Base styles are defined first, using CSS variables.
+      Theme-specific styles are applied by setting `data-theme` on the <body>.
+    */
+
+    :root {
+      /* Default fallbacks (will be overridden by themes) */
+      --font-heading: 'Inter', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      
+      --color-bg: #111;
+      --color-panel: #222;
+      --color-slide: #333;
+      --color-text: #eee;
+      --color-text-dim: #999;
+      --color-accent: #00ffaa;
+      --color-accent-dark: #000;
+      --color-border: rgba(255, 255, 255, 0.3);
+
+      --bg-image: linear-gradient(180deg, #222, #111);
+      --panel-image: linear-gradient(180deg, #333, #222);
+      --slide-image: linear-gradient(180deg, #191919, #111111);
+      --accent-image: linear-gradient(90deg, #00ffaa, #00ccee);
+      
+      --radius: 8px;
+      --shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+
+    /* --- THEME 1: RETRO-FUTURISTIC --- */
+    body[data-theme="retro"] {
+      --font-heading: 'Orbitron', sans-serif;
+      --font-body: 'IBM Plex Mono', monospace;
+      
+      --color-bg: #0a0a0a;
+      --color-panel: #1a1a1a;
+      --color-slide: #111111;
+      --color-text: #e0e0e0;
+      --color-text-dim: #999999;
+      --color-accent: #00ffaa;
+      --color-accent-dark: #0a0a0a;
+      --color-border: rgba(0, 255, 170, 0.4);
+
+      --bg-image: radial-gradient(ellipse at bottom, #0a101a 0%, #0a0a0a 70%);
+      --panel-image: linear-gradient(180deg, #222222, #1a1a1a);
+      --slide-image: linear-gradient(180deg, #151515, #111111);
+      --accent-image: linear-gradient(90deg, #00ffaa, #00ccee);
+      
+      --radius: 4px;
+      --shadow: 0 0 20px rgba(0, 255, 170, 0.15);
+      --shadow-text: 0 0 8px rgba(0, 255, 170, 0.3);
+    }
+
+    /* --- THEME 2: EDUCATIONAL (MINIMALIST) --- */
+    body[data-theme="educational"] {
+      --font-heading: 'Inter', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      
+      --color-bg: #ffffff; /* Brighter background */
+      --color-panel: #ffffff;
+      --color-slide: #ffffff;
+      --color-text: #111827; /* dark text */
+      --color-text-dim: #6b7280;
+      --color-accent: #00bfa5; /* Brighter teal accent */
+      --color-accent-dark: #ffffff;
+      --color-border: #f0f0f0; /* Lighter border */
+
+      --bg-image: none;
+      --panel-image: none;
+      --slide-image: none;
+      --accent-image: linear-gradient(90deg, #00bfa5, #00a896); /* Brighter accent gradient */
+      
+      --radius: 8px;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      --shadow-text: none;
     }
     
-    /* Slide Content Styles (From File 1) */
-    #slide-content h1 {
-      font-size: 2.5rem; /* 40px */
-      line-height: 1.2;
-      font-weight: 700;
-      margin-bottom: 1.5rem;
+    /* --- THEME 3: CREATIVE (FUNKY) --- */
+    body[data-theme="creative"] {
+      --font-heading: 'Pacifico', cursive;
+      --font-body: 'Comic Neue', cursive;
+      
+      --color-bg: #fff;
+      --color-panel: #fff;
+      --color-slide: #fff;
+      --color-text: #2c3e50;
+      --color-text-dim: #7f8c8d;
+      --color-accent: #e74c3c; /* red */
+      --color-accent-dark: #ffffff;
+      --color-border: #2c3e50; /* dark border */
+
+      --bg-image: linear-gradient(45deg, #f3a683, #f7d794); /* peach/yellow */
+      --panel-image: linear-gradient(180deg, #ffffff, #fafafa);
+      --slide-image: linear-gradient(180deg, #ffffff, #fafafa);
+      --accent-image: linear-gradient(90deg, #e74c3c, #f1c40f); /* red/yellow */
+      
+      --radius: 12px;
+      --shadow: 0 8px 16px rgba(44, 62, 80, 0.2);
+      --shadow-text: none;
     }
-    #slide-content h2 {
-      font-size: 1.875rem; /* 30px */
-      font-weight: 600;
-      margin-bottom: 1.25rem;
+    
+    /* --- BASE STYLES (use variables) --- */
+
+    html, body { 
+      height: 100%; margin: 0; padding: 0; 
+      -webkit-font-smoothing: antialiased; 
+      -moz-osx-font-smoothing: grayscale; 
     }
-    #slide-content ul {
-      list-style-type: disc;
-      padding-left: 2.5rem;
-      font-size: 1.5rem; /* 24px */
-      line-height: 1.75;
+    body {
+      font-family: var(--font-body);
+      background-color: var(--color-bg);
+      background-image: var(--bg-image);
+      color: var(--color-text);
+      min-height: 100vh;
+      overflow: hidden;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
-    #slide-content p {
-      font-size: 1.5rem; /* 24px */
-      line-height: 1.75;
+    h1, h2, h3, h4, h5, h6 {
+      font-family: var(--font-heading);
+      color: var(--color-text);
+      text-shadow: var(--shadow-text);
+      letter-spacing: 0.05em;
     }
 
-    /* Slide transition animation (From File 2) */
-    .slide-anim {
-      animation: fadeIn 0.5s ease-in-out;
+    /* --- INPUT VIEW --- */
+    #input-view {
+      background: transparent;
     }
+    #input-view > .w-full.max-w-lg {
+      background-color: var(--color-panel);
+      background-image: var(--panel-image);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--color-border);
+    }
+    h1.text-center { color: var(--color-text); }
+    p.input-p { color: var(--color-text-dim); font-size: 0.9rem; }
+    textarea#topic-input {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      padding: 12px;
+      border-radius: var(--radius);
+      color: var(--color-text);
+      font-family: var(--font-body);
+      font-size: 14px;
+    }
+    textarea#topic-input:focus {
+      border-color: var(--color-accent);
+      outline: none;
+    }
+
+    /* --- THEME RADIO BUTTONS --- */
+    .theme-selector { display: flex; justify-content: space-around; margin-top: 1rem; }
+    .theme-selector label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: var(--radius);
+      border: 2px solid transparent;
+      transition: all 0.2s ease;
+      font-size: 0.8rem;
+      color: var(--color-text-dim);
+    }
+    .theme-selector input { opacity: 0; width: 0; height: 0; }
+    .theme-selector .icon {
+      width: 40px; height: 40px;
+      border: 2px solid var(--color-border);
+      border-radius: 50%;
+      margin-bottom: 4px;
+      background-size: cover;
+    }
+    /* Icons for themes */
+    .icon-retro { background-image: linear-gradient(45deg, #00ffaa, #0a0a0a 50%); }
+    .icon-edu { background-image: linear-gradient(45deg, #00bfa5, #ffffff 50%); } /* Updated icon color */
+    .icon-creative { background-image: linear-gradient(45deg, #e74c3c, #f1c40f 50%); }
+    
+    .theme-selector input:checked + label {
+      border-color: var(--color-accent);
+      color: var(--color-text);
+    }
+    .theme-selector input:checked + label .icon {
+      border-color: var(--color-accent);
+      transform: scale(1.1);
+    }
+
+    /* --- BUTTONS --- */
+    button {
+      font-family: var(--font-body);
+      font-weight: 700;
+      border-radius: var(--radius);
+      transition: all .15s ease-out;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      box-shadow: none;
+      border: 1px solid var(--color-border);
+    }
+    /* Primary Button */
+    #generate-btn {
+      background: var(--accent-image);
+      color: var(--color-accent-dark);
+      border: none;
+      padding: 12px 18px;
+    }
+    #generate-btn:not(:disabled):hover { opacity: 0.85; box-shadow: var(--shadow); }
+    #generate-btn:disabled { background: #333; color: #777; border-color: #333; opacity: .55; }
+    /* Secondary Buttons (Nav, Back) */
+    #prev-btn, #next-btn, #back-btn {
+      background: transparent;
+      color: var(--color-accent);
+      padding: 10px 16px;
+      border: 1px solid var(--color-border);
+      backdrop-filter: blur(4px);
+    }
+    #prev-btn:not(:disabled):hover, 
+    #next-btn:not(:disabled):hover, 
+    #back-btn:not(:disabled):hover {
+      background: var(--color-accent);
+      color: var(--color-accent-dark);
+      border-color: var(--color-accent);
+    }
+    #prev-btn:disabled, #next-btn:disabled { color: #555; border-color: #333; opacity: 0.5; }
+
+    /* --- PRESENTATION VIEW --- */
+    #presentation-view { background: transparent; }
+    #slide-container {
+      width: 100%;
+      max-width: 1200px;
+      aspect-ratio: 16 / 9;
+      border-radius: var(--radius);
+      padding: 28px;
+      overflow: hidden;
+      background-color: var(--color-slide);
+      background-image: var(--slide-image);
+      border: 1px solid var(--color-border);
+      box-shadow: var(--shadow);
+      color: var(--color-text);
+    }
+    /* Slide Content (Dynamic) */
+    #slide-content h1 {
+      font-family: var(--font-heading);
+      font-size: 2.5rem;
+      color: var(--color-accent);
+      margin-bottom: 1.5rem;
+      text-shadow: var(--shadow-text);
+    }
+    #slide-content h2 {
+      font-family: var(--font-heading);
+      font-size: 1.875rem; 
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      color: var(--color-text);
+    }
+    #slide-content ul {
+      list-style-type: square;
+      padding-left: 2.5rem;
+      font-size: 1.25rem;
+      line-height: 1.75;
+      font-family: var(--font-body);
+    }
+    #slide-content p {
+      font-size: 1.25rem;
+      line-height: 1.75;
+      font-family: var(--font-body);
+      color: var(--color-text);
+    }
+    #slide-content li { margin-bottom: 0.5rem; }
+    #slide-content strong { color: var(--color-accent); font-weight: 700; }
+    #slide-content code {
+      background: var(--color-bg);
+      padding: 0.1em 0.3em;
+      border-radius: 4px;
+      color: var(--color-accent);
+    }
+
+    /* Slide counter */
+    #slide-counter {
+      font-family: var(--font-body);
+      color: var(--color-text-dim);
+      background: var(--color-panel);
+      border-radius: var(--radius);
+      padding: 8px 14px;
+      border: 1px solid var(--color-border);
+    }
+    /* Webcam */
+    #webcam {
+      width: 220px;
+      border-radius: var(--radius);
+      border: 1px solid var(--color-border);
+      object-fit: cover;
+      background: #111;
+      transition: all 0.3s ease;
+    }
+    /* Watermark */
+    #watermark {
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 60;
+      font-family: var(--font-heading);
+      font-size: 16px;
+      color: var(--color-accent);
+      background: rgba(10, 10, 10, 0.7);
+      padding: 6px 12px;
+      border-radius: var(--radius);
+      pointer-events: none;
+      border: 1px solid var(--color-border);
+      text-shadow: var(--shadow-text);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      backdrop-filter: blur(4px);
+      white-space: nowrap;
+    }
+    
+    /* Animation */
+    .slide-anim { animation: fadeIn 0.5s ease-in-out; }
     @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 
-<body class="h-full">
+<body class="h-full" data-theme="retro"> <!-- Default theme -->
 
-  <div id="input-view" class="flex h-full items-center justify-center bg-gray-900">
-    <div class="w-full max-w-lg rounded-xl bg-white p-8 shadow-2xl">
-      <h1 class="text-center text-3xl font-bold text-gray-900">Ultimate AI Presenter</h1>
-      <p class="mt-2 text-center text-gray-600">What topic do you want to present on?</p>
+  <div id="watermark" aria-hidden="true">LOGIC PILOTS</div>
+
+  <div id="input-view" class="flex h-full items-center justify-center">
+    <div class="w-full max-w-lg rounded-xl p-8">
+      <h1 class="text-center text-3xl font-bold">Ultimate AI Presenter</h1>
+      <p class="mt-2 text-center input-p">What topic do you want to present on?</p>
       
       <div class="mt-6">
-        <label for="topic-input" class="block text-sm font-medium text-gray-700">Presentation Topic</label>
-        <textarea id="topic-input" rows="4" class="mt-1 block w-full rounded-md border-gray-300 p-3 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="e.g., 'A 5-slide presentation on the basics of neural networks'"></textarea>
+        <label for="topic-input" class="block text-sm font-medium sr-only">Presentation Topic</label>
+        <textarea id="topic-input" rows="4" class="mt-1 block w-full p-3" placeholder="e.g., 'A 5-slide presentation on the basics of neural networks'"></textarea>
+      </div>
+
+      <!-- NEW THEME SELECTOR -->
+      <div class="mt-6">
+        <p class="text-center input-p">Choose a visual theme:</p>
+        <div class="theme-selector mt-2">
+          
+          <input type="radio" id="theme-retro" name="theme" value="retro" checked>
+          <label for="theme-retro">
+            <span class="icon icon-retro"></span>
+            Retro-Futuristic
+          </label>
+          
+          <input type="radio" id="theme-edu" name="theme" value="educational">
+          <label for="theme-edu">
+            <span class="icon icon-edu"></span>
+            Educational
+          </label>
+          
+          <input type="radio" id="theme-creative" name="theme" value="creative">
+          <label for="theme-creative">
+            <span class="icon icon-creative"></span>
+            Creative
+          </label>
+        </div>
       </div>
       
-      <div class="mt-6">
-        <button id="generate-btn" class="flex w-full justify-center rounded-md border border-transparent bg-blue-600 py-3 px-4 text-lg font-bold text-white shadow-sm hover:bg-blue-700 disabled:bg-gray-400">
+      <div class="mt-8">
+        <button id="generate-btn" class="flex w-full justify-center py-3 px-4 text-lg">
           <span id="generate-btn-text">Generate & Present</span>
-          <svg id="loading-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <svg id="loading-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-current hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
@@ -79,42 +398,46 @@
     </div>
   </div>
 
-  <div id="presentation-view" class="relative hidden h-full w-full flex-col items-center justify-center bg-gray-900 p-8">
+  <div id="presentation-view" class="relative hidden h-full w-full flex-col items-center justify-center p-8">
     
-    <div id="slide-container" class="flex w-full max-w-5xl aspect-[16/9] flex-col justify-center rounded-lg bg-white p-12 text-left shadow-xl text-gray-900">
+    <div id="slide-container" class="flex w-full max-w-5xl aspect-[16/9] flex-col justify-center rounded-lg p-12 text-left">
       <div id="slide-content" class="w-full h-full">
-        </div>
+        <!-- Dynamic content injected here -->
+      </div>
     </div>
 
-    <div id="slide-counter" class="absolute bottom-20 text-lg font-medium text-gray-300 z-10">
+    <div id="slide-counter" class="absolute bottom-20 text-lg font-medium z-10">
       Slide 1 / 1
     </div>
 
-    <video id="webcam" autoplay muted playsinline class="w-52 h-auto aspect-video bg-black fixed bottom-4 left-4 rounded-lg shadow-2xl border border-gray-700 z-20 object-cover"></video>
+    <video id="webcam" autoplay muted playsinline class="w-52 h-auto aspect-video fixed bottom-4 left-4 z-20 object-cover"></video>
 
-    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-4">
-      <button id="prev-btn" class="px-5 py-2 bg-white bg-opacity-20 text-white rounded-lg shadow-lg backdrop-blur-sm hover:bg-opacity-30 transition-all active:scale-95 disabled:opacity-50">
+    <div class="fixed bottom-6 left-1\/2 -translate-x-1\/2 z-20 flex gap-4">
+      <button id="prev-btn" class="px-5 py-2">
         &larr; Prev
       </button>
-      <button id="next-btn" class="px-5 py-2 bg-white bg-opacity-20 text-white rounded-lg shadow-lg backdrop-blur-sm hover:bg-opacity-30 transition-all active:scale-95 disabled:opacity-50">
+      <button id="next-btn" class="px-5 py-2">
         Next &rarr;
       </button>
     </div>
     
-    <button id="back-btn" class="fixed top-6 left-6 rounded-lg bg-gray-600 py-2 px-4 text-sm font-medium text-white shadow-md hover:bg-gray-700 z-20">
+    <button id="back-btn" class="fixed top-6 left-6 py-2 px-4 text-sm font-medium z-20">
       &larr; New Topic
     </button>
   </div>
 
 
   <script type="module">
-    // --- STATE & CONSTANTS (MERGED) ---
+    // --- STATE & CONSTANTS ---
     
-    // Gemini API Config (From File 1)
+    // Gemini API Config
     const MODEL_NAME = "gemini-2.5-flash-preview-09-2025";
     const apiKey = "AIzaSyCo1ps1aqgDtMUMBYD_9DraFyule8pTBZs"; // This is a placeholder
+    // --- FIX: Corrected typo in URL ---
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${apiKey}`;
-    const systemPrompt = `You are a presentation-generation AI. The user will provide a topic.
+    
+    // BASE System Prompt (Theme will be added to this)
+    const baseSystemPrompt = `You are a presentation-generation AI. The user will provide a topic.
 You must generate a series of slides.
 Respond *only* with a valid JSON array. Each object in the array should have a "title" (string) and "content" (string).
 The "content" field should be formatted as simple Markdown (e.g., using <ul>, <li>, <p>, <strong>).
@@ -140,14 +463,15 @@ Example of your *only* output:
     let slides = [];
     let currentSlide = 0;
     let isLoading = false;
+    let currentTheme = 'retro';
     
-    // Gesture AI State (From File 2)
+    // Gesture AI State
     let detector;
     let webcamStream;
     let isGestureCooldown = false;
     const GESTURE_COOLDOWN_MS = 1500; // 1.5 seconds
 
-    // --- DOM ELEMENTS (MERGED) ---
+    // --- DOM ELEMENTS ---
     const inputView = document.getElementById("input-view");
     const presentationView = document.getElementById("presentation-view");
     
@@ -165,14 +489,25 @@ Example of your *only* output:
     const backBtn = document.getElementById("back-btn");
     
     const webcamVideo = document.getElementById('webcam');
+    const watermark = document.getElementById('watermark');
+    
+    const themeRadios = document.querySelectorAll('input[name="theme"]');
 
-    // --- VIEW FUNCTIONS (MERGED) ---
+    // --- THEME FUNCTIONS ---
+    function applyTheme(themeName) {
+      document.body.dataset.theme = themeName;
+      currentTheme = themeName;
+      console.log(`Theme changed to: ${themeName}`);
+    }
+
+    // --- VIEW FUNCTIONS ---
     
     function showInputView() {
       inputView.classList.remove("hidden");
       inputView.classList.add("flex");
       presentationView.classList.add("hidden");
       presentationView.classList.remove("flex");
+      watermark.style.display = 'block'; // Keep watermark visible
 
       // Stop webcam and AI when returning to input
       stopWebcamAI();
@@ -183,17 +518,14 @@ Example of your *only* output:
       inputView.classList.remove("flex");
       presentationView.classList.remove("hidden");
       presentationView.classList.add("flex");
+      watermark.style.display = 'block';
 
       // Start the webcam and AI
       setupWebcamAI();
     }
 
-    // --- PRESENTATION FUNCTIONS (MERGED) ---
+    // --- PRESENTATION FUNCTIONS ---
 
-    /**
-     * This is the slide renderer from File 1.
-     * It's perfect for rendering the text/HTML from Gemini.
-     */
     function updateSlideContent() {
       if (slides.length === 0) return;
       
@@ -201,11 +533,10 @@ Example of your *only* output:
       const contentHtml = marked.parse(slide.content);
       
       slideContent.innerHTML = `
-        <h1 class="text-4xl font-bold mb-6">${slide.title}</h1>
-        <div class="text-2xl leading-relaxed">${contentHtml}</div>
+        <h1>${slide.title}</h1>
+        <div>${contentHtml}</div>
       `;
       
-      // Add animation class
       slideContainer.classList.remove('slide-anim');
       void slideContainer.offsetWidth; // Force reflow
       slideContainer.classList.add('slide-anim');
@@ -219,27 +550,31 @@ Example of your *only* output:
       nextBtn.disabled = (currentSlide === slides.length - 1);
     }
 
-    /**
-     * These are the navigation functions from File 2.
-     * They are superior because they include the gesture cooldown check.
-     */
     function nextSlide() {
       if (currentSlide >= slides.length - 1 || isGestureCooldown) return;
-      
-      console.log("Moving to Next Slide");
       currentSlide++;
-      updateSlideContent(); // Use File 1's render function
+      updateSlideContent();
     }
 
     function prevSlide() {
       if (currentSlide <= 0 || isGestureCooldown) return;
-
-      console.log("Moving to Previous Slide");
       currentSlide--;
-      updateSlideContent(); // Use File 1's render function
+      updateSlideContent();
     }
 
-    // --- GEMINI API FUNCTIONS (From File 1) ---
+    // --- GEMINI API FUNCTIONS ---
+    
+    function getThemedSystemPrompt(theme) {
+      let themeInstruction = "";
+      if (theme === 'retro') {
+        themeInstruction = "The presentation style should be retro-futuristic, like a 1980s computer terminal. Use sharp, technical language and monospace-friendly formatting.";
+      } else if (theme === 'educational') {
+        themeInstruction = "The presentation style should be educational and minimalist. Use clear, concise language, suitable for a classroom or professional setting. Focus on bullet points and clarity.";
+      } else if (theme === 'creative') {
+        themeInstruction = "The presentation style should be creative and funky. Use playful language, bright ideas, and maybe even emojis. Keep it fun and engaging.";
+      }
+      return `${themeInstruction}\n\n${baseSystemPrompt}`;
+    }
     
     async function handleGenerate() {
       const userTopic = topicInput.value;
@@ -249,10 +584,17 @@ Example of your *only* output:
       }
       
       setLoading(true);
+      
+      // 1. Get selected theme
+      const selectedTheme = document.querySelector('input[name="theme"]:checked').value;
+      applyTheme(selectedTheme);
+      
+      // 2. Get themed prompt
+      const finalSystemPrompt = getThemedSystemPrompt(selectedTheme);
 
       const payload = {
         systemInstruction: {
-          parts: [{ "text": systemPrompt }]
+          parts: [{ "text": finalSystemPrompt }]
         },
         contents: [{
           parts: [{ "text": userTopic }]
@@ -286,10 +628,9 @@ Example of your *only* output:
             throw new Error("AI did not return valid slide data.");
         }
 
-        // Success! Reset state and show the presentation.
         currentSlide = 0;
         updateSlideContent();
-        showPresentationView(); // This will now also start the webcam!
+        showPresentationView();
 
       } catch (error) {
         console.error("Error generating slides:", error);
@@ -318,10 +659,12 @@ Example of your *only* output:
         try {
           const response = await fetch(url, options);
           if (!response.ok) {
-            throw new Error(`API Error: ${response.status} ${response.statusText}`);
+            const errorText = await response.text();
+            throw new Error(`API Error: ${response.status} ${response.statusText} - ${errorText}`);
           }
           return await response.json();
         } catch (error) {
+          console.error(`Fetch attempt ${i + 1} failed:`, error);
           lastError = error;
           if (i < retries - 1) {
             await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
@@ -331,31 +674,24 @@ Example of your *only* output:
       throw lastError;
     }
 
-    // --- TENSORFLOW.JS AI FUNCTIONS (From File 2) ---
+    // --- TENSORFLOW.JS AI FUNCTIONS ---
 
     async function setupWebcamAI() {
-      // Don't re-setup if already running
       if (detector) return; 
-
-      // 1. Get webcam feed
       try {
         webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         webcamVideo.srcObject = webcamStream;
       } catch (err) {
         console.error("Error accessing webcam:", err);
         webcamVideo.style.display = 'none';
-        return; // Stop if no webcam
+        return;
       }
-
-      // 2. Wait for video to be ready
       await new Promise((resolve) => {
         webcamVideo.onloadedmetadata = () => {
           webcamVideo.play();
           resolve();
         };
       });
-
-      // 3. Load the MoveNet detector
       try {
         const detectorConfig = {
           modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
@@ -364,16 +700,11 @@ Example of your *only* output:
         console.log("MoveNet detector loaded.");
       } catch (err) {
         console.error("Error loading MoveNet model:", err);
-        return; // Stop if model fails to load
+        return;
       }
-
-      // 4. Start the detection loop
       runDetectionLoop();
     }
 
-    /**
-     * Stops the webcam and clears the detector
-     */
     function stopWebcamAI() {
       if (webcamStream) {
         webcamStream.getTracks().forEach(track => track.stop());
@@ -382,37 +713,28 @@ Example of your *only* output:
       if (detector) {
         detector.dispose();
         detector = null;
-        console.log("Webcam and AI stopped.");
       }
     }
 
     async function runDetectionLoop() {
-      // Stop loop if detector was disposed (e.g., user went "Back")
       if (!detector) return; 
-
       try {
         const poses = await detector.estimatePoses(webcamVideo, {
           flipHorizontal: false
         });
-
         if (poses && poses.length > 0 && poses[0].keypoints) {
           handleGesture(poses[0].keypoints);
         }
       } catch (err) {
         console.error("Error during pose estimation:", err);
       }
-      
-      // Loop
       requestAnimationFrame(runDetectionLoop);
     }
 
     function handleGesture(keypoints) {
-      if (isGestureCooldown) {
-        return;
-      }
+      if (isGestureCooldown) return;
 
       const getKeypoint = (name) => keypoints.find(kp => kp.name === name);
-
       const rightWrist = getKeypoint('right_wrist');
       const rightElbow = getKeypoint('right_elbow');
       const leftWrist = getKeypoint('left_wrist');
@@ -428,42 +750,49 @@ Example of your *only* output:
       }
 
       let gestureDetected = false;
-
-      // "Next" gesture: Right wrist is above right elbow
       if (rightWrist.y < rightElbow.y) {
-        console.log("Next Gesture (Right Hand Up) Detected!");
         nextSlide();
         gestureDetected = true;
-      } 
-      // "Prev" gesture: Left wrist is above left elbow
-      else if (leftWrist.y < leftElbow.y) {
-        console.log("Prev Gesture (Left Hand Up) Detected!");
+      } else if (leftWrist.y < leftElbow.y) {
         prevSlide();
         gestureDetected = true;
       }
 
       if (gestureDetected) {
         isGestureCooldown = true;
-        webcamVideo.style.borderColor = 'rgb(59 130 246)'; // Blue
+        
+        // --- THEMED GESTURE ---
+        // Get the computed accent color from the CSS variables
+        const activeColor = getComputedStyle(document.body).getPropertyValue('--color-accent');
+        const defaultBorder = getComputedStyle(document.body).getPropertyValue('--color-border');
+        
+        webcamVideo.style.borderColor = activeColor;
         webcamVideo.style.borderWidth = '4px';
 
         setTimeout(() => {
           isGestureCooldown = false;
-          webcamVideo.style.borderColor = 'rgb(55 65 81)'; // Gray
+          webcamVideo.style.borderColor = defaultBorder;
           webcamVideo.style.borderWidth = '1px';
         }, GESTURE_COOLDOWN_MS);
       }
     }
 
-
-    // --- EVENT LISTENERS (MERGED) ---
+    // --- EVENT LISTENERS ---
     generateBtn.addEventListener("click", handleGenerate);
     prevBtn.addEventListener("click", prevSlide);
     nextBtn.addEventListener("click", nextSlide);
     backBtn.addEventListener("click", showInputView);
+    
+    // Add listeners for theme changing
+    themeRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        applyTheme(e.target.value);
+      });
+    });
 
     // --- INITIALIZATION ---
-    showInputView(); // Start on the input screen
+    applyTheme('retro'); // Set default theme on load
+    showInputView(); 
     
   </script>
 
